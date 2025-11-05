@@ -11,9 +11,10 @@ Shows hardware energy consumption statistics.
 import numpy as np
 import sys
 import time
+import os
 
 # Add package to path
-sys.path.insert(0, '/home/user/ccw-diffusion_machine')
+sys.path.insert(0, os.path.abspath(os.path.dirname(__file__)))
 
 from dtm_simulator.core.boltzmann_machine import BoltzmannMachine
 from dtm_simulator.core.dtm import DTM, DTMConfig
