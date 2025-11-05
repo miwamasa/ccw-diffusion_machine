@@ -92,14 +92,15 @@ class DTM:
         return ebm_layers
 
     def solve(self, problem, max_steps: int = 5000,
-              verbose: bool = False) -> Tuple[np.ndarray, dict]:
+              verbose: bool = False, use_annealing: bool = True) -> Tuple[np.ndarray, dict]:
         """
-        Solve a constraint satisfaction problem.
+        Solve a constraint satisfaction problem using Metropolis-Hastings sampling.
 
         Args:
             problem: Problem instance with energy_function method
             max_steps: Maximum number of sampling steps
             verbose: Whether to print progress
+            use_annealing: Whether to use simulated annealing
 
         Returns:
             Tuple of (solution, info_dict)
@@ -107,50 +108,111 @@ class DTM:
         # Get problem dimensions
         N = problem.get_num_variables()
 
-        # Adjust grid size if needed
-        if N != self.config.grid_size ** 2:
-            # Resize or use problem-specific handling
-            pass
+        # Initialize with problem-specific initialization
+        x_init = self._initialize_from_problem(problem, N)
 
-        # Initialize with random state
-        x_init = self.rng.choice([-1, 1], size=N)
-
-        # Set problem-specific biases on EBM layers
-        for ebm in self.ebm_layers:
-            problem_bias = problem.get_bias_vector(N)
-            ebm.set_bias(problem_bias)
-
-        # Sample using the last layer EBM with problem constraints
+        # Metropolis-Hastings sampling with simulated annealing
         best_x = x_init.copy()
-        best_energy = float('inf')
+        best_energy = problem.energy_function(x_init)
         energies = []
+        acceptance_rate = []
 
         x = x_init.copy()
+        current_energy = best_energy
 
         for step in range(max_steps):
-            # Gibbs sampling step
-            x = self.ebm_layers[-1].gibbs_step(x, color=0)
-            x = self.ebm_layers[-1].gibbs_step(x, color=1)
+            # Temperature schedule (simulated annealing)
+            if use_annealing:
+                temperature = self._get_temperature(step, max_steps)
+            else:
+                temperature = 1.0
 
-            # Evaluate problem energy
-            energy = problem.energy_function(x)
-            energies.append(energy)
+            # Propose a change (flip a random bit)
+            x_new = x.copy()
+            flip_idx = self.rng.integers(0, N)
+            x_new[flip_idx] = -x_new[flip_idx]
 
-            if energy < best_energy:
-                best_energy = energy
+            # Evaluate new energy
+            new_energy = problem.energy_function(x_new)
+
+            # Metropolis-Hastings acceptance criterion
+            delta_E = new_energy - current_energy
+            if delta_E < 0 or self.rng.random() < np.exp(-delta_E / temperature):
+                x = x_new
+                current_energy = new_energy
+                accepted = True
+            else:
+                accepted = False
+
+            acceptance_rate.append(1.0 if accepted else 0.0)
+            energies.append(current_energy)
+
+            # Track best solution
+            if current_energy < best_energy:
+                best_energy = current_energy
                 best_x = x.copy()
 
             if verbose and step % 500 == 0:
-                print(f"Step {step}: Energy = {energy:.4f}, Best = {best_energy:.4f}")
+                recent_accept = np.mean(acceptance_rate[-100:]) if len(acceptance_rate) >= 100 else np.mean(acceptance_rate)
+                sat_rate = problem.satisfaction_rate(best_x)
+                print(f"Step {step}: Energy = {current_energy:.4f}, Best = {best_energy:.4f}, "
+                      f"Temp = {temperature:.4f}, Accept = {recent_accept:.2%}, Sat = {sat_rate:.1%}")
 
         info = {
             "energies": energies,
             "best_energy": best_energy,
             "final_energy": energies[-1],
-            "num_steps": max_steps
+            "num_steps": max_steps,
+            "acceptance_rate": np.mean(acceptance_rate)
         }
 
         return best_x, info
+
+    def _initialize_from_problem(self, problem, N: int) -> np.ndarray:
+        """
+        Initialize state with problem-specific hints.
+
+        Args:
+            problem: Problem instance
+            N: Number of variables
+
+        Returns:
+            Initial state vector
+        """
+        # Start with random state
+        x = self.rng.choice([-1, 1], size=N)
+
+        # Apply problem bias to guide initialization
+        bias = problem.get_bias_vector(N)
+
+        # Set variables with strong bias
+        strong_bias_mask = np.abs(bias) > 5.0
+        x[strong_bias_mask] = np.sign(bias[strong_bias_mask])
+
+        return x
+
+    def _get_temperature(self, step: int, max_steps: int) -> float:
+        """
+        Get temperature for simulated annealing.
+
+        Uses exponential cooling schedule.
+
+        Args:
+            step: Current step
+            max_steps: Total steps
+
+        Returns:
+            Temperature value
+        """
+        # Initial and final temperatures
+        T_init = 10.0
+        T_final = 0.01
+
+        # Exponential cooling
+        progress = step / max_steps
+        temperature = T_init * (T_final / T_init) ** progress
+
+        return temperature
 
     def denoise(self, x_noisy: np.ndarray,
                 noise_level: int = None) -> np.ndarray:

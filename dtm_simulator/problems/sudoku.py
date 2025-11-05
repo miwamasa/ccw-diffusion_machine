@@ -102,19 +102,19 @@ class SudokuProblem(ConstraintProblem):
         for i in range(9):
             for j in range(9):
                 constraint = np.sum(x_3d[i, j, :]) - 1
-                energy -= self.alpha_cell * constraint ** 2
+                energy += self.alpha_cell * constraint ** 2
 
         # Row constraint: each digit appears once per row
         for i in range(9):
             for k in range(9):
                 constraint = np.sum(x_3d[i, :, k]) - 1
-                energy -= self.alpha_row * constraint ** 2
+                energy += self.alpha_row * constraint ** 2
 
         # Column constraint: each digit appears once per column
         for j in range(9):
             for k in range(9):
                 constraint = np.sum(x_3d[:, j, k]) - 1
-                energy -= self.alpha_col * constraint ** 2
+                energy += self.alpha_col * constraint ** 2
 
         # Block constraint: each digit appears once per 3×3 block
         for bi in range(3):
@@ -122,7 +122,7 @@ class SudokuProblem(ConstraintProblem):
                 for k in range(9):
                     block = x_3d[bi*3:(bi+1)*3, bj*3:(bj+1)*3, k]
                     constraint = np.sum(block) - 1
-                    energy -= self.alpha_block * constraint ** 2
+                    energy += self.alpha_block * constraint ** 2
 
         return energy
 

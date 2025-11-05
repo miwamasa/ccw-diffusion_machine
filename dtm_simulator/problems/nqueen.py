@@ -79,12 +79,12 @@ class NQueenProblem(ConstraintProblem):
         # Row constraint: exactly one queen per row
         for i in range(self.board_size):
             constraint = np.sum(board[i, :]) - 1
-            energy -= self.beta_row * constraint ** 2
+            energy += self.beta_row * constraint ** 2
 
         # Column constraint: exactly one queen per column
         for j in range(self.board_size):
             constraint = np.sum(board[:, j]) - 1
-            energy -= self.beta_col * constraint ** 2
+            energy += self.beta_col * constraint ** 2
 
         # Diagonal constraints: at most one queen per diagonal
         # Main diagonals (top-left to bottom-right)
@@ -92,7 +92,7 @@ class NQueenProblem(ConstraintProblem):
             diag = np.diag(board, k=d)
             if len(diag) > 1:
                 violation = max(0, np.sum(diag) - 1)
-                energy -= self.beta_diag1 * violation ** 2
+                energy += self.beta_diag1 * violation ** 2
 
         # Anti-diagonals (top-right to bottom-left)
         board_flipped = np.fliplr(board)
@@ -100,7 +100,7 @@ class NQueenProblem(ConstraintProblem):
             diag = np.diag(board_flipped, k=d)
             if len(diag) > 1:
                 violation = max(0, np.sum(diag) - 1)
-                energy -= self.beta_diag2 * violation ** 2
+                energy += self.beta_diag2 * violation ** 2
 
         return energy
 
