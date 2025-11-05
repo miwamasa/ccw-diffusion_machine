@@ -54,10 +54,10 @@ def demo_nqueen():
 
     # Solve
     print("\nSolving 8-Queen problem...")
-    print("(This may take 10-30 seconds...)")
+    print("(This may take 30-60 seconds...)")
     start_time = time.time()
 
-    best_x, info = dtm.solve(problem, max_steps=2000, verbose=False)
+    best_x, info = dtm.solve(problem, max_steps=20000, verbose=True)
 
     solve_time = time.time() - start_time
 
@@ -128,10 +128,10 @@ def demo_sudoku():
 
     # Solve
     print("\nSolving Sudoku puzzle...")
-    print("(This may take 20-40 seconds...)")
+    print("(This may take 60-120 seconds...)")
     start_time = time.time()
 
-    best_x, info = dtm.solve(problem, max_steps=3000, verbose=False)
+    best_x, info = dtm.solve(problem, max_steps=50000, verbose=True)
 
     solve_time = time.time() - start_time
 
