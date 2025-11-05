@@ -12,8 +12,10 @@ commonly used in statistical physics and machine learning.
 import sys
 import time
 import numpy as np
+import os
 
-sys.path.insert(0, '/home/user/ccw-diffusion_machine')
+# Add parent directory to path
+sys.path.insert(0, os.path.abspath(os.path.join(os.path.dirname(__file__), '..')))
 
 from dtm_simulator.core.dtm import DTM, DTMConfig
 from dtm_simulator.problems.potts import PottsModel
