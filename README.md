@@ -22,6 +22,7 @@ Denoising Thermodynamic Models (DTM) のハードウェアシミュレータ実�
 ### 問題インターフェース
 - **Sudoku**: 9×9 Sudoku問題のエンコーダ/デコーダ
 - **N-Queen**: N-Queen問題のエンコーダ/デコーダ
+- **Potts Model**: グラフ彩色、クラスタリング、画像セグメンテーション
 - **カスタム問題**: 抽象基底クラスによる拡張可能な設計
 
 ## インストール
@@ -39,6 +40,7 @@ pip install -r requirements.txt
 
 ### デモの実行
 
+**メインデモ（N-Queen & Sudoku）:**
 ```bash
 python demo.py
 ```
@@ -48,6 +50,17 @@ python demo.py
 2. 8-Queen問題の求解
 3. Sudoku問題の求解
 4. エネルギー消費統計の表示
+
+**Potts Modelデモ（グラフ彩色）:**
+```bash
+python examples/potts_model_demo.py
+```
+
+Potts Modelデモでは以下を実行します：
+1. サイクルグラフの彩色
+2. 2Dグリッドグラフの彩色
+3. ランダムグラフの彩色
+4. ハードウェアエネルギー分析
 
 ### テストの実行
 
@@ -99,6 +112,34 @@ board = problem.decode_solution(solution_x)
 
 # 結果を表示
 print(problem.format_solution(board))
+print(f"Constraint satisfaction: {problem.satisfaction_rate(solution_x)*100:.1f}%")
+```
+
+### Potts Model（グラフ彩色）
+
+```python
+from dtm_simulator.core.dtm import DTM, DTMConfig
+from dtm_simulator.problems.potts import PottsModel
+
+# サイクルグラフの彩色問題を作成
+problem = PottsModel.create_cycle_graph(num_nodes=6, num_colors=3)
+
+# または2Dグリッドグラフ
+# problem = PottsModel.create_grid_graph(rows=3, cols=3, num_colors=4)
+
+# またはランダムグラフ
+# problem = PottsModel.create_random_graph(num_nodes=10, num_colors=3, edge_probability=0.3)
+
+# DTM求解器を作成
+config = DTMConfig(num_layers=2, grid_size=5, K_infer=50, beta=1.0)
+dtm = DTM(config)
+
+# 求解
+solution_x, info = dtm.solve(problem, max_steps=10000)
+states = problem.decode_solution(solution_x)
+
+# 結果を表示
+print(problem.format_solution(states))
 print(f"Constraint satisfaction: {problem.satisfaction_rate(solution_x)*100:.1f}%")
 ```
 
