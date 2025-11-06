@@ -55,14 +55,19 @@ class ReverseProcess:
         # Get EBM for this layer
         ebm = self.ebm_layers[t - 1]
 
-        # Set bias based on x_t to incorporate forward energy
-        # This is a simplified version - in full implementation,
-        # bias would be computed from gradients of E^f
-        bias = self._compute_conditional_bias(x_t, t)
-        ebm.set_bias(bias)
+        # Save original bias (preserve learned parameters)
+        original_bias = ebm.h.copy()
+
+        # Compute conditional bias based on x_t to incorporate forward energy
+        # ADD this to the learned bias rather than REPLACING it
+        conditional_bias = self._compute_conditional_bias(x_t, t)
+        ebm.h = original_bias + conditional_bias
 
         # Sample from EBM to get x_{t-1}
         x_prev = ebm.sample(x_t, num_steps=self.K)[0]
+
+        # Restore original bias for next use
+        ebm.h = original_bias
 
         return x_prev
 
