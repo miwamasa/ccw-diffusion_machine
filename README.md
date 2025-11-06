@@ -75,6 +75,19 @@ python examples/diffusion_process_demo.py
 
 このデモは、DTMの**本来の用途**である生成モデルとしての動作を示します。
 
+**EBM学習付き拡散プロセスデモ（Contrastive Divergence）:**
+```bash
+python examples/diffusion_with_training_demo.py
+```
+
+EBM学習付きデモでは以下を比較します：
+1. 未学習EBM: ランダムなパラメータ＋弱いバイアス（ベースライン）
+2. 単一パターン学習: ターゲットパターンのみで学習したEBM
+3. 複数パターン学習: 複数パターンで学習したEBM（**+6.2%改善を達成！**）
+
+このデモは、**Contrastive Divergence**アルゴリズムによるEBM学習が
+デノイジング性能を向上させることを実証します。
+
 ### テストの実行
 
 ```bash
